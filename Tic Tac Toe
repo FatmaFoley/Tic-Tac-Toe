@@ -1,0 +1,244 @@
+#include<iostream>
+#include <cstdlib> // For srand and rand functions 
+#include <ctime> // for std::time function 
+#include <vector>
+#include <utility>
+#include <set>
+using namespace std;
+
+// Function to check if three characters are equal and not empty
+bool haveSameValueAndNotEmpty(char x, char y, char z) {
+    if (x == y && x == z && x != ' ') {
+        return true;
+    }
+    return false;
+}
+
+// Function to check the winner of the game
+int checkWinner(char board[3][3]) {
+    //  2: X winner
+    // -2: O winner
+    //  0: Tie
+    //  1: No winner
+
+    // For rows
+    for (int i = 0; i < 3; i++) {
+        if (haveSameValueAndNotEmpty(board[i][0], board[i][1], board[i][2])) {
+            return board[i][0] == 'X' ? 2 : -2;
+        }
+    }
+    // For columns
+    for (int i = 0; i < 3; i++) {
+        if (haveSameValueAndNotEmpty(board[0][i], board[1][i], board[2][i])) {
+            return board[0][i] == 'X' ? 2 : -2;
+        }
+    }
+    // Diagonal 1
+    if (haveSameValueAndNotEmpty(board[0][0], board[1][1], board[2][2])) {
+        return board[0][0] == 'X' ? 2 : -2;
+    }
+    // Diagonal 2
+    if (haveSameValueAndNotEmpty(board[2][0], board[1][1], board[0][2])) {
+        return board[2][0] == 'X' ? 2 : -2;
+    }
+    // For Tie Case
+    bool tie = true;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] == ' ') {
+                tie = false;
+            }
+        }
+    }
+    if (tie) return 0;
+
+    // No winner yet
+    return 1;
+}
+
+// Function to draw the Tic Tac Toe board
+void drawBoard(char board[3][3]) {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << "| " << board[i][j] << " |";
+        }
+        cout << "\n -------------- \n";
+    }
+}
+
+// Minimax algorithm for AI player move
+int minimax(char board[3][3], int depth, bool isMaximizing, bool firstTime = true) {
+    int result = checkWinner(board);
+// If maximum depth reached or game over , return the result 
+    if (depth == 0 || result != 1) {
+        return result;
+    }
+//Maximizing player's turn(AI - O)
+    if (isMaximizing) {
+        int finalScore = -10;
+        int finalI, finalJ;
+// Loop through all empty cells 
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+//Make a move
+    board[i][j] = 'X';
+//Recursively call minimax for the next move
+                    int score = minimax(board, depth - 1, false, false);
+                  //Undo the move 
+                    board[i][j] = ' ';
+                  //Update final score if needed 
+                    if (score > finalScore) {
+                        finalScore = score;
+                        finalI = i;
+                        finalJ = j;
+                    }
+                }
+            }
+        }
+//If it's the first move, update the board with AI's move
+        if (firstTime) {
+            board[finalI][finalJ] = 'O';
+        }
+        return finalScore;
+    }
+//Minimizing player's turn (Human -X)
+    else {
+        int finalScore = 10;
+        int finalI, finalJ;
+// Loop through all empty cells 
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+// Make a move 
+                    board[i][j] = 'O';
+//Recursively call minimax for the next move
+                    int score = minimax(board, depth - 1, true, false);
+//Undo the move 
+                    board[i][j] = ' ';
+//Update the final score if needed 
+                    if (score < finalScore) {
+                        finalScore = score;
+                        finalI = i;
+                        finalJ = j;
+                    }
+                }
+            }
+        }
+//If it's the first move, update the board with AI's move
+        if (firstTime) {
+            board[finalI][finalJ] = 'O';
+        }
+        return finalScore;
+    }
+}
+
+// Function to get a vector of questions and answers
+vector<pair<string, double>> getQuestionsAndAnswers() {
+    // Define a list of questions and their answers
+    vector<pair<string, double>> questionsAndAnswers = {
+        {"1&&1", 1},
+        {"1||0", 1},
+        {"!(1&&0)", 1},
+        {"!(1||0)", 0},
+        {"!(1||1)", 0},
+        {"!(0||0)", 1},
+        {"!(0&&0)", 1},
+        {"!(1&&1)", 0},
+        {"1||1", 1},
+        {"1&&0", 0}
+    };
+
+    // Return the vector of pairs
+    return questionsAndAnswers;
+}
+
+int main() {
+    // Initialize the random number generator
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    // Call the function to get a vector of questions and answers
+    vector<pair<string, double>> questionsAndAnswers = getQuestionsAndAnswers();
+
+    // Create a set to track used questions
+    set<int> usedQuestions;
+
+    // Game variables
+    double num;
+    char board[3][3] = { {' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '} }; //initialize the Tic tac toe board 
+    bool hasWinner = false;
+    char player = 'X'; //player starts as X
+
+    cout << "You are X player" << endl;
+
+    while (!hasWinner) {
+        int x, y; // 1, 2, 3 (coordinates for the player's move)
+        cout << "Enter row number (1, 2, 3): ";
+        cin >> x;
+        cout << "Enter column number (1, 2, 3): ";
+        cin >> y;
+
+        // Convert to array indices
+        x--; // Decrement by 1 to match array indices 
+        y--; // Decrement by 1 to match array indices
+
+        // Validate user input
+        if (x < 0 || x > 2 || y < 0 || y > 2 || board[x][y] != ' ') {
+            cout << "Invalid input. Please enter again.\n";
+            continue;
+        }
+
+        // Asking random question
+        int randomIndex;
+        do {
+            randomIndex = rand() % questionsAndAnswers.size();  //Generate a random index within the range of questionsAndAnswers vectors 
+        } while (usedQuestions.find(randomIndex) != usedQuestions.end());
+// Ensure the question hasn't been used before 
+        usedQuestions.insert(randomIndex); //Add the index to the set of used questions 
+        string randomQuestion = questionsAndAnswers[randomIndex].first;
+//Get the random question 
+        double correctAnswer = questionsAndAnswers[randomIndex].second;  //Get the correct answer for the question 
+
+        cout << "Solve the following equation: " << randomQuestion << endl;
+        cout << "Enter the result: ";
+        cin >> num; // Get the player's answer 
+
+        if (num == correctAnswer) {
+            cout << "True\n";
+            // Proceed with the player's move
+            if (board[x][y] == ' ') {
+                board[x][y] = player; // place the symbol X on board 
+                int result = minimax(board, 100, false); //use the minimax algorithm to calculate AI's move 
+                drawBoard(board); // draw the updated board 
+                cout << "Result: " << result << "\n";
+                hasWinner = checkWinner(board) != 1; // check if there is winner or tie
+            } else {
+                cout << "The field is not empty. Please choose another.\n";
+                continue;
+            }
+        } else {
+            cout << "Incorrect answer. AI plays instead.\n";
+            // AI plays instead
+            int aiX, aiY;
+            do {
+                aiX = rand() % 3; //generate random row for AI's move
+                aiY = rand() % 3; //generate         random column for AI's move         
+                } while (board[aiX][aiY] != ' '); //check if the choosen cell is empty 
+            board[aiX][aiY] = 'O';
+            int result = minimax(board, 100, true, false); // Pass false to prevent player's move
+            drawBoard(board);
+            cout << "Result: " << result << "\n";
+            hasWinner = checkWinner(board) != 1;
+        }
+    }
+
+    // Determine the game result
+    int result = checkWinner(board); //check the winner again to finalize the game result 
+    if (result == 0) {
+        cout << "Tie\n";
+    } else {
+        cout << ((result == 2) ? "X" : "O") << " player wins\n";
+    }
+
+    return 0;
+}
